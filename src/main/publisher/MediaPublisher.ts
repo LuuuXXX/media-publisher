@@ -5,6 +5,9 @@ import { XiaohongshuPublisher } from './xiaohongshu';
 import { WeiboPublisher } from './weibo';
 import { KuaishouPublisher } from './kuaishou';
 import { ToutiaoPublisher } from './toutiao';
+import { XiguaPublisher } from './xigua';
+import { ZhihuPublisher } from './zhihu';
+import { JianshuPublisher } from './jianshu';
 import { AccountStore } from '../storage/AccountStore';
 
 export interface MediaPublishOptions {
@@ -28,6 +31,9 @@ export class MediaPublisher {
       ['weibo', new WeiboPublisher()],
       ['kuaishou', new KuaishouPublisher()],
       ['toutiao', new ToutiaoPublisher()],
+      ['xigua', new XiguaPublisher()],
+      ['zhihu', new ZhihuPublisher()],
+      ['jianshu', new JianshuPublisher()],
     ]);
   }
 

@@ -55,13 +55,13 @@ export interface MediaFile {
 }
 
 export const PLATFORM_CONFIG: Platform[] = [
-  { id: 'douyin', name: '抖音', logo: '/logos/douyin.png', loginType: 'qrcode', category: 'video' },
-  { id: 'bilibili', name: 'B站', logo: '/logos/bilibili.png', loginType: 'password', category: 'video' },
-  { id: 'kuaishou', name: '快手', logo: '/logos/kuaishou.png', loginType: 'qrcode', category: 'video' },
-  { id: 'xigua', name: '西瓜视频', logo: '/logos/xigua.png', loginType: 'password', category: 'video' },
-  { id: 'toutiao', name: '今日头条', logo: '/logos/toutiao.png', loginType: 'password', category: 'article' },
-  { id: 'zhihu', name: '知乎', logo: '/logos/zhihu.png', loginType: 'password', category: 'article' },
-  { id: 'jianshu', name: '简书', logo: '/logos/jianshu.png', loginType: 'password', category: 'article' },
-  { id: 'xiaohongshu', name: '小红书', logo: '/logos/xiaohongshu.png', loginType: 'qrcode', category: 'both' },
-  { id: 'weibo', name: '微博', logo: '/logos/weibo.png', loginType: 'password', category: 'both' },
+  { id: 'douyin', name: '抖音', logo: 'logos/douyin.svg', loginType: 'qrcode', category: 'video' },
+  { id: 'bilibili', name: 'B站', logo: 'logos/bilibili.svg', loginType: 'password', category: 'video' },
+  { id: 'kuaishou', name: '快手', logo: 'logos/kuaishou.svg', loginType: 'qrcode', category: 'video' },
+  { id: 'xigua', name: '西瓜视频', logo: 'logos/xigua.svg', loginType: 'password', category: 'video' },
+  { id: 'toutiao', name: '今日头条', logo: 'logos/toutiao.svg', loginType: 'password', category: 'article' },
+  { id: 'zhihu', name: '知乎', logo: 'logos/zhihu.svg', loginType: 'password', category: 'article' },
+  { id: 'jianshu', name: '简书', logo: 'logos/jianshu.svg', loginType: 'password', category: 'article' },
+  { id: 'xiaohongshu', name: '小红书', logo: 'logos/xiaohongshu.svg', loginType: 'qrcode', category: 'both' },
+  { id: 'weibo', name: '微博', logo: 'logos/weibo.svg', loginType: 'password', category: 'both' },
 ];

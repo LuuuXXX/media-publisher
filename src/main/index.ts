@@ -203,7 +203,10 @@ ipcMain.handle('publish:media', async (_event, options: {
   tags: string[];
 }) => {
   try {
-    // Check file size for free tier limit
+    const videoExtensions = new Set(['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v']);
+    const fileExt = path.extname(options.filePath).toLowerCase().replace('.', '');
+    const isVideo = videoExtensions.has(fileExt);
+
     let fileSizeMB: number | undefined;
     try {
       const { statSync } = await import('fs');
@@ -212,7 +215,7 @@ ipcMain.handle('publish:media', async (_event, options: {
     } catch {
       // File size check is optional; proceed without it
     }
-    const canPublish = await featureGuard.checkPublishPermission(options.platforms.length, fileSizeMB);
+    const canPublish = await featureGuard.checkPublishPermission(options.platforms.length, fileSizeMB, isVideo);
     if (!canPublish.allowed) {
       return { success: false, error: canPublish.reason };
     }

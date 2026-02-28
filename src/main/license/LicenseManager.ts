@@ -21,8 +21,10 @@ const HMAC_SECRET = (() => {
   const secret = process.env.LICENSE_HMAC_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
-      console.error('[LicenseManager] LICENSE_HMAC_SECRET is not set. License signatures cannot be trusted in production.');
+      console.error('[LicenseManager] LICENSE_HMAC_SECRET is not set. License signatures cannot be trusted in production. Refusing to start without a proper secret.');
+      throw new Error('[LicenseManager] Missing LICENSE_HMAC_SECRET in production environment.');
     }
+    // In non-production environments, fall back to a fixed default for convenience.
     return 'media-publisher-default-secret';
   }
   return secret;
@@ -58,10 +60,19 @@ export class LicenseManager {
   private verifySignature(license: LicenseData): boolean {
     const { signature, ...data } = license;
     const expectedSignature = this.signLicense(data);
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'hex'),
-      Buffer.from(expectedSignature, 'hex')
-    );
+    // Validate signature format before using timingSafeEqual
+    const hexPattern = /^[0-9a-fA-F]+$/;
+    if (typeof signature !== 'string' || !hexPattern.test(signature) || signature.length !== expectedSignature.length) {
+      return false;
+    }
+    try {
+      return crypto.timingSafeEqual(
+        Buffer.from(signature, 'hex'),
+        Buffer.from(expectedSignature, 'hex')
+      );
+    } catch {
+      return false;
+    }
   }
 
   async initialize(): Promise<void> {

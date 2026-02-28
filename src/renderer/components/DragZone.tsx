@@ -84,7 +84,7 @@ export const DragZone: React.FC<DragZoneProps> = ({ onFileSelected }) => {
   const handleClick = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'video/*,image/*,.txt,.md,.doc,.docx';
+    input.accept = 'video/*,image/*,.txt,.md,.doc,.docx,.html';
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) handleFile(file);

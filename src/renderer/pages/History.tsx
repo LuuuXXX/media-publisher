@@ -41,7 +41,7 @@ export const History: React.FC = () => {
       title: '文件',
       dataIndex: 'filePath',
       key: 'filePath',
-      render: (path: string) => path.split('/').pop() || path,
+      render: (filePath: string) => filePath.split(/[\\/]/).pop() || filePath,
       ellipsis: true,
     },
     {

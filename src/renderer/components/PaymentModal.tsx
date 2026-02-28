@@ -45,14 +45,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
 
   const startPolling = (id: string) => {
     pollingRef.current = setInterval(async () => {
-      const result = await window.electronAPI.payment.checkOrder(id);
-      if (result.success && result.data?.status === 'paid') {
-        if (pollingRef.current) clearInterval(pollingRef.current);
-        if (result.data.licenseKey) {
-          setActivationKey(result.data.licenseKey);
-          await activateLicense(result.data.licenseKey);
-          setCurrentStep(2);
-          onSuccess();
+      try {
+        const result = await window.electronAPI.payment.checkOrder(id);
+        if (result.success && result.data?.status === 'paid') {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          if (result.data.licenseKey) {
+            setActivationKey(result.data.licenseKey);
+            await activateLicense(result.data.licenseKey);
+            setCurrentStep(2);
+            onSuccess();
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check order status:', error);
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
         }
       }
     }, 3000);
@@ -160,11 +167,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
             style={{ marginBottom: 16 }}
           />
           <Card style={{ display: 'inline-block', padding: 16 }}>
-            <Spin tip="等待支付...">
-              <div style={{ width: 200, height: 200, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography.Text type="secondary">二维码加载中</Typography.Text>
-              </div>
-            </Spin>
+            {qrCodeUrl ? (
+              <img
+                src={qrCodeUrl}
+                alt="扫码支付二维码"
+                style={{ width: 200, height: 200, display: 'block' }}
+              />
+            ) : (
+              <Spin tip="等待支付...">
+                <div style={{ width: 200, height: 200, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography.Text type="secondary">二维码加载中</Typography.Text>
+                </div>
+              </Spin>
+            )}
           </Card>
           <div style={{ marginTop: 16 }}>
             <Typography.Text type="secondary">订单号: {orderId}</Typography.Text>

@@ -47,7 +47,7 @@ export class FeatureGuard {
     }
   }
 
-  async checkPublishPermission(platformCount: number, fileSizeMB?: number): Promise<{ allowed: boolean; reason?: string }> {
+  async checkPublishPermission(platformCount: number, fileSizeMB?: number, isVideo?: boolean): Promise<{ allowed: boolean; reason?: string }> {
     const isPaid = await this.licenseManager.isPaid();
 
     if (isPaid) {
@@ -71,7 +71,7 @@ export class FeatureGuard {
       };
     }
 
-    if (fileSizeMB !== undefined && fileSizeMB > FREE_LIMITS.maxVideoSizeMB) {
+    if (isVideo && fileSizeMB !== undefined && fileSizeMB > FREE_LIMITS.maxVideoSizeMB) {
       return {
         allowed: false,
         reason: `免费版视频文件不能超过 ${FREE_LIMITS.maxVideoSizeMB}MB，请升级到付费版`,
