@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, Typography, message, Alert, List, Tag, Space } from 'antd';
+import { Card, Form, Input, Typography, message, List, Tag, Space } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { DragZone } from '../components/DragZone';
 import { PlatformSelector } from '../components/PlatformSelector';
@@ -34,7 +34,7 @@ export const Publish: React.FC = () => {
         platforms: selectedPlatforms,
         title: values.title,
         description: values.description || '',
-        tags: values.tags ? values.tags.split(',').map((t: string) => t.trim()) : [],
+        tags: values.tags ? Array.from(new Set<string>(values.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0))) : [],
       });
 
       if (result.success && result.data) {

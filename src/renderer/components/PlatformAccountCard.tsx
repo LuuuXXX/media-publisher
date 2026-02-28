@@ -9,7 +9,7 @@ interface PlatformAccountCardProps {
   onSave: (platform: string, username: string, password: string) => Promise<boolean>;
   onDelete: (platform: string) => Promise<boolean>;
   onTest: (platform: string) => Promise<boolean>;
-  onToggle: (platform: string, enabled: boolean) => void;
+  onToggle: (platform: string, enabled: boolean) => Promise<boolean>;
 }
 
 export const PlatformAccountCard: React.FC<PlatformAccountCardProps> = ({
@@ -60,7 +60,7 @@ export const PlatformAccountCard: React.FC<PlatformAccountCardProps> = ({
         actions={account ? [
           <Button key="test" type="link" size="small" loading={testing} onClick={handleTest} icon={<CheckCircleOutlined />}>测试</Button>,
           <Button key="edit" type="link" size="small" onClick={handleEdit} icon={<EditOutlined />}>编辑</Button>,
-          <Popconfirm key="delete" title="确定删除此账户吗？" onConfirm={() => onDelete(platform.id)} okText="删除" cancelText="取消">
+          <Popconfirm key="delete" title="确定删除此账户吗？" onConfirm={async () => { await onDelete(platform.id); }} okText="删除" cancelText="取消">
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>,
         ] : [
@@ -91,7 +91,9 @@ export const PlatformAccountCard: React.FC<PlatformAccountCardProps> = ({
               <Switch
                 size="small"
                 checked={account.enabled}
-                onChange={(checked) => onToggle(platform.id, checked)}
+                onChange={async (checked) => {
+                  await onToggle(platform.id, checked);
+                }}
               />
             </Space>
           )}

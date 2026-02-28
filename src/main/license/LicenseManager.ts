@@ -140,8 +140,9 @@ export class LicenseManager {
       return false;
     }
 
-    // 检查是否已过期
+    // 检查是否已过期，过期时同步清除本地缓存
     if (license.expiresAt && new Date(license.expiresAt) < new Date()) {
+      this.store.set('license', null);
       return false;
     }
 

@@ -27,7 +27,7 @@ export class FeatureGuard {
       name: 'usage',
       defaults: {
         usage: {
-          date: new Date().toDateString(),
+          date: FeatureGuard.getTodayString(),
           publishCount: 0,
           totalPublishCount: 0,
         },
@@ -35,9 +35,17 @@ export class FeatureGuard {
     });
   }
 
+  private static getTodayString(): string {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   private resetDailyCountIfNeeded(): void {
     const usage = this.store.get('usage');
-    const today = new Date().toDateString();
+    const today = FeatureGuard.getTodayString();
     if (usage.date !== today) {
       this.store.set('usage', {
         ...usage,
