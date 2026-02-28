@@ -19,6 +19,8 @@ export const History: React.FC = () => {
       if (result.success && result.data) {
         setHistory(result.data);
       }
+    } catch (err) {
+      console.error('加载发布历史失败:', err);
     } finally {
       setLoading(false);
     }

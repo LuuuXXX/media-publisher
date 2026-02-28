@@ -128,7 +128,7 @@ npm install puppeteer
 ## 安全说明
 
 - 账户密码使用 Electron safeStorage API（Windows DPAPI / macOS Keychain）加密存储
-- 降级方案使用 AES-256-CBC 加密，密钥基于机器特征生成
+- 降级方案使用 AES-256-GCM 加密（兼容解密旧 AES-256-CBC 数据），密钥基于机器特征生成
 - 许可证使用 HMAC-SHA256 签名防止篡改
 - 账户信息不会上传到任何服务器
 

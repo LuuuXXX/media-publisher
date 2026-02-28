@@ -42,6 +42,10 @@ export function useLicense() {
         message.error(result.error || '激活失败');
       }
       return result.success;
+    } catch (err) {
+      console.error('许可证激活异常:', err);
+      message.error('许可证激活失败，请稍后重试');
+      return false;
     } finally {
       setLoading(false);
     }
