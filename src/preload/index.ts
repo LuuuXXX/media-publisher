@@ -5,8 +5,6 @@ const api = {
   account: {
     save: (platform: string, account: { username: string; password: string }) =>
       ipcRenderer.invoke('account:save', platform, account),
-    get: (platform: string) =>
-      ipcRenderer.invoke('account:get', platform),
     getAll: () =>
       ipcRenderer.invoke('account:getAll'),
     delete: (platform: string) =>

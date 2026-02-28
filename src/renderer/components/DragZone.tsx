@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Typography, Space } from 'antd';
+import { Typography, Space, message } from 'antd';
 import { InboxOutlined, VideoCameraOutlined, FileTextOutlined, PictureOutlined } from '@ant-design/icons';
 import type { MediaFile, MediaType } from '../types';
 
@@ -43,9 +43,15 @@ export const DragZone: React.FC<DragZoneProps> = ({ onFileSelected }) => {
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
 
   const handleFile = useCallback((file: File) => {
+    const nativePath = (file as ElectronFile).path;
+    if (!nativePath) {
+      // 在 Electron 环境外（如浏览器）无法获取原生路径，提示用户使用系统文件选择器
+      message.error('无法获取文件路径，请通过系统文件选择器选择文件。');
+      return;
+    }
     const mediaType = detectMediaType(file.name);
     const mediaFile: MediaFile = {
-      path: (file as ElectronFile).path || file.name,
+      path: nativePath,
       name: file.name,
       size: file.size,
       type: mediaType,

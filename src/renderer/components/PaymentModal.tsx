@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal, Steps, Button, Space, Typography, Card, Spin, Alert, Input, Form } from 'antd';
+import { Modal, Steps, Button, Space, Typography, Card, Spin, Alert, Input, Form, message as antMessage } from 'antd';
 import { AlipayCircleOutlined, WechatOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useLicense } from '../hooks/useLicense';
 
@@ -42,7 +42,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
         setQrCodeUrl(result.data.qrCodeUrl);
         setCurrentStep(1);
         startPolling(result.data.orderId);
+      } else {
+        // 创建订单失败，重置状态并提示用户
+        setPaymentMethod('');
+        setOrderId('');
+        setQrCodeUrl('');
+        antMessage.error('创建支付订单失败，请稍后重试。');
       }
+    } catch (error) {
+      setPaymentMethod('');
+      setOrderId('');
+      setQrCodeUrl('');
+      console.error('创建支付订单异常:', error);
+      antMessage.error('创建支付订单失败，请稍后重试。');
     } finally {
       setLoading(false);
     }

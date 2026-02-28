@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
 import { AccountStore } from './storage/AccountStore';
 import { LicenseManager } from './license/LicenseManager';
@@ -64,15 +64,6 @@ ipcMain.handle('account:save', async (_event, platform: string, account: { usern
   try {
     await accountStore.saveAccount(platform, account);
     return { success: true };
-  } catch (error) {
-    return { success: false, error: (error as Error).message };
-  }
-});
-
-ipcMain.handle('account:get', async (_event, platform: string) => {
-  try {
-    const account = await accountStore.getAccount(platform);
-    return { success: true, data: account };
   } catch (error) {
     return { success: false, error: (error as Error).message };
   }

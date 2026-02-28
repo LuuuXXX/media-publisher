@@ -74,10 +74,14 @@ export class MediaPublisher {
       }
 
       try {
-        const result = await publisher.publish({
-          ...options,
+        const publishOptions: PublishOptions = {
+          filePath: options.filePath,
+          title: options.title,
+          description: options.description,
+          tags: options.tags,
           account,
-        } as PublishOptions);
+        };
+        const result = await publisher.publish(publishOptions);
         results.push({ ...result, platform });
       } catch (error) {
         results.push({

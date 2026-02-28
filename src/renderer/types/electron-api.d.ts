@@ -7,7 +7,6 @@ declare global {
     electronAPI: {
       account: {
         save: (platform: string, account: { username: string; password: string; enabled?: boolean }) => Promise<{ success: boolean; error?: string }>;
-        get: (platform: string) => Promise<{ success: boolean; data?: { username: string; password: string; enabled: boolean } }>;
         getAll: () => Promise<{ success: boolean; data?: Record<string, AccountInfo> }>;
         delete: (platform: string) => Promise<{ success: boolean; error?: string }>;
         export: (password: string) => Promise<{ success: boolean; error?: string }>;
