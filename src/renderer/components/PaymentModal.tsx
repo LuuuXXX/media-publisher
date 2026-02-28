@@ -78,7 +78,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
       } catch (error) {
         console.error('订单状态查询失败:', error);
         antMessage.error('订单状态查询失败，请稍后重试或手动输入许可证密钥激活。');
-        return; // 异常时停止轮询，用户可通过手动输入密钥恢复
+        // 返回步骤 0，用户可使用已有许可证密钥手动激活
+        setCurrentStep(0);
+        return; // 异常时停止轮询
       }
       // 上一轮完成后再调度下一轮，避免并发请求叠加
       pollingRef.current = setTimeout(poll, 3000);

@@ -213,8 +213,8 @@ ipcMain.handle('publish:media', async (_event, options: {
 
     let fileSizeMB: number | undefined;
     try {
-      const { statSync } = await import('fs');
-      const stats = statSync(options.filePath);
+      const { stat } = await import('fs/promises');
+      const stats = await stat(options.filePath);
       fileSizeMB = stats.size / (1024 * 1024);
     } catch {
       // 文件大小获取失败时跳过检查，不阻断发布流程

@@ -1,6 +1,7 @@
 import Store from 'electron-store';
 import * as crypto from 'crypto';
 import axios from 'axios';
+import { app } from 'electron';
 import { machineIdSync } from 'node-machine-id';
 
 interface LicenseData {
@@ -20,11 +21,11 @@ interface LicenseStore {
 const HMAC_SECRET = (() => {
   const secret = process.env.LICENSE_HMAC_SECRET;
   if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('[LicenseManager] 生产环境未设置 LICENSE_HMAC_SECRET，许可证签名无法信任，拒绝启动。');
-      throw new Error('[LicenseManager] 生产环境缺少 LICENSE_HMAC_SECRET 环境变量。');
+    if (app.isPackaged) {
+      console.error('[LicenseManager] 打包环境未设置 LICENSE_HMAC_SECRET，许可证签名无法信任，拒绝启动。');
+      throw new Error('[LicenseManager] 打包环境缺少 LICENSE_HMAC_SECRET 环境变量。');
     }
-    // 非生产环境回退到固定默认值，仅用于开发调试。
+    // 非打包环境回退到固定默认值，仅用于开发调试。
     return 'media-publisher-default-secret';
   }
   return secret;
