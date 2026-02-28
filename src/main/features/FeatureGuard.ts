@@ -47,7 +47,7 @@ export class FeatureGuard {
     }
   }
 
-  async checkPublishPermission(platformCount: number): Promise<{ allowed: boolean; reason?: string }> {
+  async checkPublishPermission(platformCount: number, fileSizeMB?: number): Promise<{ allowed: boolean; reason?: string }> {
     const isPaid = await this.licenseManager.isPaid();
 
     if (isPaid) {
@@ -68,6 +68,13 @@ export class FeatureGuard {
       return {
         allowed: false,
         reason: `免费版每天最多发布 ${FREE_LIMITS.dailyPublishLimit} 次，请明天再试或升级到付费版`,
+      };
+    }
+
+    if (fileSizeMB !== undefined && fileSizeMB > FREE_LIMITS.maxVideoSizeMB) {
+      return {
+        allowed: false,
+        reason: `免费版视频文件不能超过 ${FREE_LIMITS.maxVideoSizeMB}MB，请升级到付费版`,
       };
     }
 

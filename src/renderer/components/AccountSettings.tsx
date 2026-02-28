@@ -13,7 +13,7 @@ const tabItems = [
 ];
 
 export const AccountSettings: React.FC = () => {
-  const { accounts, loadAccounts, saveAccount, deleteAccount, exportAccounts, importAccounts, testConnection } = useAccounts();
+  const { accounts, saveAccount, toggleAccount, deleteAccount, exportAccounts, importAccounts, testConnection } = useAccounts();
   const [activeTab, setActiveTab] = useState('all');
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const [importModalVisible, setImportModalVisible] = useState(false);
@@ -22,21 +22,6 @@ export const AccountSettings: React.FC = () => {
   const filteredPlatforms = activeTab === 'all'
     ? PLATFORM_CONFIG
     : PLATFORM_CONFIG.filter(p => p.category === activeTab);
-
-  const handleToggle = async (platform: string, enabled: boolean) => {
-    const account = accounts[platform];
-    if (account) {
-      const fullAccount = await window.electronAPI.account.get(platform);
-      if (fullAccount.success && fullAccount.data) {
-        await window.electronAPI.account.save(platform, {
-          username: fullAccount.data.username,
-          password: fullAccount.data.password,
-          enabled,
-        } as { username: string; password: string });
-        await loadAccounts();
-      }
-    }
-  };
 
   const handleExport = async () => {
     if (!password) return;
@@ -88,7 +73,7 @@ export const AccountSettings: React.FC = () => {
               onSave={saveAccount}
               onDelete={deleteAccount}
               onTest={testConnection}
-              onToggle={handleToggle}
+              onToggle={toggleAccount}
             />
           </Col>
         ))}

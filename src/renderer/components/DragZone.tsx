@@ -33,6 +33,11 @@ const mediaTypeLabels: Record<MediaType, string> = {
   unknown: '未知',
 };
 
+// Electron exposes the native file path on File objects via a non-standard 'path' property
+interface ElectronFile extends File {
+  path?: string;
+}
+
 export const DragZone: React.FC<DragZoneProps> = ({ onFileSelected }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
@@ -40,7 +45,7 @@ export const DragZone: React.FC<DragZoneProps> = ({ onFileSelected }) => {
   const handleFile = useCallback((file: File) => {
     const mediaType = detectMediaType(file.name);
     const mediaFile: MediaFile = {
-      path: (file as File & { path?: string }).path || file.name,
+      path: (file as ElectronFile).path || file.name,
       name: file.name,
       size: file.size,
       type: mediaType,

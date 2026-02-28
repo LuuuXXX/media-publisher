@@ -33,7 +33,14 @@ export class AccountStore {
       const machineId = machineIdSync();
       return crypto.createHash('sha256').update(machineId).digest();
     } catch {
-      return crypto.createHash('sha256').update('fallback-key').digest();
+      // When machine ID is unavailable, generate and persist a random fallback key
+      const fallbackStore = new Store<{ key: string }>({ name: 'fallback-key', defaults: { key: '' } });
+      let storedKey = fallbackStore.get('key');
+      if (!storedKey) {
+        storedKey = crypto.randomBytes(32).toString('base64');
+        fallbackStore.set('key', storedKey);
+      }
+      return Buffer.from(storedKey, 'base64');
     }
   }
 

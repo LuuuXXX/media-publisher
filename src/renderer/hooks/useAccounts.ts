@@ -6,7 +6,7 @@ declare global {
   interface Window {
     electronAPI: {
       account: {
-        save: (platform: string, account: { username: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+        save: (platform: string, account: { username: string; password: string; enabled?: boolean }) => Promise<{ success: boolean; error?: string }>;
         get: (platform: string) => Promise<{ success: boolean; data?: { username: string; password: string; enabled: boolean } }>;
         getAll: () => Promise<{ success: boolean; data?: Record<string, AccountInfo> }>;
         delete: (platform: string) => Promise<{ success: boolean; error?: string }>;
@@ -65,6 +65,20 @@ export function useAccounts() {
     return result.success;
   };
 
+  const toggleAccount = async (platform: string, enabled: boolean) => {
+    const getResult = await window.electronAPI.account.get(platform);
+    if (!getResult.success || !getResult.data) return false;
+    const result = await window.electronAPI.account.save(platform, {
+      username: getResult.data.username,
+      password: getResult.data.password,
+      enabled,
+    });
+    if (result.success) {
+      await loadAccounts();
+    }
+    return result.success;
+  };
+
   const deleteAccount = async (platform: string) => {
     const result = await window.electronAPI.account.delete(platform);
     if (result.success) {
@@ -112,6 +126,7 @@ export function useAccounts() {
     loading,
     loadAccounts,
     saveAccount,
+    toggleAccount,
     deleteAccount,
     exportAccounts,
     importAccounts,

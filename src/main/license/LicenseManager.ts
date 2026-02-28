@@ -17,7 +17,16 @@ interface LicenseStore {
   license: LicenseData | null;
 }
 
-const HMAC_SECRET = process.env.LICENSE_HMAC_SECRET || 'media-publisher-default-secret';
+const HMAC_SECRET = (() => {
+  const secret = process.env.LICENSE_HMAC_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[LicenseManager] LICENSE_HMAC_SECRET is not set. License signatures cannot be trusted in production.');
+    }
+    return 'media-publisher-default-secret';
+  }
+  return secret;
+})();
 const LICENSE_SERVER = process.env.LICENSE_SERVER || 'https://your-domain.com/api';
 const VERIFY_INTERVAL_DAYS = 30;
 

@@ -203,7 +203,16 @@ ipcMain.handle('publish:media', async (_event, options: {
   tags: string[];
 }) => {
   try {
-    const canPublish = await featureGuard.checkPublishPermission(options.platforms.length);
+    // Check file size for free tier limit
+    let fileSizeMB: number | undefined;
+    try {
+      const { statSync } = await import('fs');
+      const stats = statSync(options.filePath);
+      fileSizeMB = stats.size / (1024 * 1024);
+    } catch {
+      // File size check is optional; proceed without it
+    }
+    const canPublish = await featureGuard.checkPublishPermission(options.platforms.length, fileSizeMB);
     if (!canPublish.allowed) {
       return { success: false, error: canPublish.reason };
     }
