@@ -5,14 +5,14 @@ export class JianshuPublisher extends BasePublisher {
   readonly platformName = '简书';
 
   async publish(options: PublishOptions): Promise<PublishResult> {
-    // TODO: Implement Jianshu publishing using Puppeteer
-    // 1. Launch browser with Puppeteer
-    // 2. Navigate to https://www.jianshu.com/writer
-    // 3. Login with username/password
-    // 4. Create new article
-    // 5. Fill in title and content
-    // 6. Submit
-    console.log(`[JianshuPublisher] Publishing to Jianshu: ${options.title}`);
+    // TODO: 使用 Puppeteer 实现简书发布功能
+    // 1. 启动 Puppeteer 浏览器
+    // 2. 访问 https://www.jianshu.com/writer
+    // 3. 账号密码登录
+    // 4. 创建新文章
+    // 5. 填写标题和内容
+    // 6. 提交发布
+    console.log(`[JianshuPublisher] 正在发布到简书: ${options.title}`);
     return {
       platform: this.platformId,
       ...this.createErrorResult('简书发布功能正在开发中'),

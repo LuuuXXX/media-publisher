@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 const api = {
-  // Account management
+  // 账户管理
   account: {
     save: (platform: string, account: { username: string; password: string }) =>
       ipcRenderer.invoke('account:save', platform, account),
@@ -19,7 +19,7 @@ const api = {
       ipcRenderer.invoke('account:test', platform),
   },
 
-  // License management
+  // 许可证管理
   license: {
     activate: (key: string) =>
       ipcRenderer.invoke('license:activate', key),
@@ -31,7 +31,7 @@ const api = {
       ipcRenderer.invoke('license:isPaid'),
   },
 
-  // Payment
+  // 支付
   payment: {
     createOrder: (method: string) =>
       ipcRenderer.invoke('payment:createOrder', method),
@@ -39,7 +39,7 @@ const api = {
       ipcRenderer.invoke('payment:checkOrder', orderId),
   },
 
-  // Publisher
+  // 发布
   publish: {
     media: (options: {
       filePath: string;

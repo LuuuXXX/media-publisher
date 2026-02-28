@@ -59,7 +59,7 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Account management IPC handlers
+// 账户管理 IPC 处理器
 ipcMain.handle('account:save', async (_event, platform: string, account: { username: string; password: string }) => {
   try {
     await accountStore.saveAccount(platform, account);
@@ -106,7 +106,7 @@ ipcMain.handle('account:export', async (_event, password: string) => {
       await accountStore.exportAccounts(result.filePath, password);
       return { success: true };
     }
-    return { success: false, error: 'Cancelled' };
+    return { success: false, error: '已取消' };
   } catch (error) {
     return { success: false, error: (error as Error).message };
   }
@@ -122,18 +122,18 @@ ipcMain.handle('account:import', async (_event, password: string) => {
       await accountStore.importAccounts(result.filePaths[0], password);
       return { success: true };
     }
-    return { success: false, error: 'Cancelled' };
+    return { success: false, error: '已取消' };
   } catch (error) {
     return { success: false, error: (error as Error).message };
   }
 });
 
 ipcMain.handle('account:test', async (_event, platform: string) => {
-  // TODO: Implement actual connection test for each platform
+  // TODO: 实现各平台实际连接测试
   return { success: true, message: '连接测试成功（模拟）' };
 });
 
-// License management IPC handlers
+// 许可证管理 IPC 处理器
 ipcMain.handle('license:activate', async (_event, key: string) => {
   try {
     const result = await licenseManager.activateLicense(key);
@@ -170,9 +170,9 @@ ipcMain.handle('license:isPaid', async () => {
   }
 });
 
-// Payment IPC handlers
+// 支付 IPC 处理器
 ipcMain.handle('payment:createOrder', async (_event, method: string) => {
-  // TODO: Implement actual payment order creation
+  // TODO: 实现实际支付订单创建
   return {
     success: true,
     data: {
@@ -184,7 +184,7 @@ ipcMain.handle('payment:createOrder', async (_event, method: string) => {
 });
 
 ipcMain.handle('payment:checkOrder', async (_event, orderId: string) => {
-  // TODO: Implement actual order status check
+  // TODO: 实现实际订单状态查询
   return {
     success: true,
     data: {
@@ -194,7 +194,7 @@ ipcMain.handle('payment:checkOrder', async (_event, orderId: string) => {
   };
 });
 
-// Publisher IPC handlers
+// 发布 IPC 处理器
 ipcMain.handle('publish:media', async (_event, options: {
   filePath: string;
   platforms: string[];
@@ -213,7 +213,7 @@ ipcMain.handle('publish:media', async (_event, options: {
       const stats = statSync(options.filePath);
       fileSizeMB = stats.size / (1024 * 1024);
     } catch {
-      // File size check is optional; proceed without it
+      // 文件大小获取失败时跳过检查，不阻断发布流程
     }
     const canPublish = await featureGuard.checkPublishPermission(options.platforms.length, fileSizeMB, isVideo);
     if (!canPublish.allowed) {
@@ -228,6 +228,6 @@ ipcMain.handle('publish:media', async (_event, options: {
 });
 
 ipcMain.handle('publish:getHistory', async () => {
-  // TODO: Implement publish history from database
+  // TODO: 从数据库实现发布历史记录
   return { success: true, data: [] };
 });

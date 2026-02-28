@@ -44,7 +44,7 @@ export function useAccounts() {
         setAccounts(result.data);
       }
     } catch (err) {
-      console.error('Failed to load accounts:', err);
+      console.error('加载账户失败:', err);
     } finally {
       setLoading(false);
     }

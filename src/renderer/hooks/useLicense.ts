@@ -21,7 +21,7 @@ export function useLicense() {
         setIsPaid(paidResult.paid || false);
       }
     } catch (err) {
-      console.error('Failed to check license:', err);
+      console.error('许可证状态检查失败:', err);
     } finally {
       setLoading(false);
     }

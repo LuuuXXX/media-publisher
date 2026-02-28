@@ -5,14 +5,14 @@ export class WeiboPublisher extends BasePublisher {
   readonly platformName = '微博';
 
   async publish(options: PublishOptions): Promise<PublishResult> {
-    // TODO: Implement Weibo publishing using Puppeteer
-    // 1. Launch browser with Puppeteer
-    // 2. Navigate to https://weibo.com
-    // 3. Login with username/password
-    // 4. Create new post with media
-    // 5. Fill in content, tags
-    // 6. Submit
-    console.log(`[WeiboPublisher] Publishing to Weibo: ${options.title}`);
+    // TODO: 使用 Puppeteer 实现微博发布功能
+    // 1. 启动 Puppeteer 浏览器
+    // 2. 访问 https://weibo.com
+    // 3. 账号密码登录
+    // 4. 创建带媒体的新微博
+    // 5. 填写内容、标签
+    // 6. 提交发布
+    console.log(`[WeiboPublisher] 正在发布到微博: ${options.title}`);
     return {
       platform: this.platformId,
       ...this.createErrorResult('微博发布功能正在开发中'),

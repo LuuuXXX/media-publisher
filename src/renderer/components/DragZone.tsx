@@ -33,7 +33,7 @@ const mediaTypeLabels: Record<MediaType, string> = {
   unknown: '未知',
 };
 
-// Electron exposes the native file path on File objects via a non-standard 'path' property
+// Electron 通过非标准的 'path' 属性在 File 对象上暴露原生文件路径
 interface ElectronFile extends File {
   path?: string;
 }

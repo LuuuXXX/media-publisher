@@ -21,10 +21,10 @@ const HMAC_SECRET = (() => {
   const secret = process.env.LICENSE_HMAC_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
-      console.error('[LicenseManager] LICENSE_HMAC_SECRET is not set. License signatures cannot be trusted in production. Refusing to start without a proper secret.');
-      throw new Error('[LicenseManager] Missing LICENSE_HMAC_SECRET in production environment.');
+      console.error('[LicenseManager] 生产环境未设置 LICENSE_HMAC_SECRET，许可证签名无法信任，拒绝启动。');
+      throw new Error('[LicenseManager] 生产环境缺少 LICENSE_HMAC_SECRET 环境变量。');
     }
-    // In non-production environments, fall back to a fixed default for convenience.
+    // 非生产环境回退到固定默认值，仅用于开发调试。
     return 'media-publisher-default-secret';
   }
   return secret;
@@ -60,7 +60,7 @@ export class LicenseManager {
   private verifySignature(license: LicenseData): boolean {
     const { signature, ...data } = license;
     const expectedSignature = this.signLicense(data);
-    // Validate signature format before using timingSafeEqual
+    // 使用 timingSafeEqual 前先验证签名格式
     const hexPattern = /^[0-9a-fA-F]+$/;
     if (typeof signature !== 'string' || !hexPattern.test(signature) || signature.length !== expectedSignature.length) {
       return false;
@@ -78,12 +78,12 @@ export class LicenseManager {
   async initialize(): Promise<void> {
     const license = this.store.get('license');
     if (license) {
-      // Check if periodic re-verification is needed
+      // 定期检查是否需要重新在线验证
       const lastVerified = new Date(license.lastVerifiedAt);
       const daysSinceVerification = (Date.now() - lastVerified.getTime()) / (1000 * 60 * 60 * 24);
       if (daysSinceVerification >= VERIFY_INTERVAL_DAYS) {
         await this.verifyLicense().catch(() => {
-          // Ignore network errors - use cached license
+          // 网络错误时忽略，继续使用缓存的许可证
         });
       }
     }
@@ -112,7 +112,7 @@ export class LicenseManager {
       return { success: false, error: response.data.error || '激活失败' };
     } catch (error) {
       if (axios.isAxiosError(error) && error.code === 'ECONNREFUSED') {
-        // Offline activation (for testing)
+        // 离线激活（测试用）
         return { success: false, error: '无法连接到授权服务器' };
       }
       return { success: false, error: (error as Error).message };
@@ -123,19 +123,19 @@ export class LicenseManager {
     const license = this.store.get('license');
     if (!license) return false;
 
-    // Verify local signature first
+    // 先验证本地签名
     if (!this.verifySignature(license)) {
       this.store.set('license', null);
       return false;
     }
 
-    // Check expiration
+    // 检查是否已过期
     if (license.expiresAt && new Date(license.expiresAt) < new Date()) {
       return false;
     }
 
     try {
-      // Online verification
+      // 在线验证
       const response = await axios.post(`${LICENSE_SERVER}/license/verify`, {
         key: license.key,
         deviceId: this.deviceId,
@@ -153,7 +153,7 @@ export class LicenseManager {
       }
       return false;
     } catch {
-      // Use cached license on network error
+      // 网络错误时使用缓存的许可证
       return license.isPaid;
     }
   }

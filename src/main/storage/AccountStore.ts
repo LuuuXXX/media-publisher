@@ -33,7 +33,7 @@ export class AccountStore {
       const machineId = machineIdSync();
       return crypto.createHash('sha256').update(machineId).digest();
     } catch {
-      // When machine ID is unavailable, generate and persist a random fallback key
+      // 无法获取机器 ID 时，生成并持久化一个随机备用密钥
       const fallbackStore = new Store<{ key: string }>({ name: 'fallback-key', defaults: { key: '' } });
       let storedKey = fallbackStore.get('key');
       if (!storedKey) {
@@ -48,7 +48,7 @@ export class AccountStore {
     if (safeStorage.isEncryptionAvailable()) {
       return safeStorage.encryptString(text).toString('base64');
     }
-    // Fallback: AES-256-CBC encryption
+    // 回退方案：AES-256-CBC 加密
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', this.machineKey, iv);
     let encrypted = cipher.update(text, 'utf8', 'base64');
@@ -58,7 +58,7 @@ export class AccountStore {
 
   private decrypt(encrypted: string): string {
     if (encrypted.startsWith('aes:')) {
-      // AES-256-CBC decryption
+      // AES-256-CBC 解密
       const parts = encrypted.split(':');
       const iv = Buffer.from(parts[1], 'base64');
       const encryptedText = parts[2];
@@ -70,7 +70,7 @@ export class AccountStore {
     if (safeStorage.isEncryptionAvailable()) {
       return safeStorage.decryptString(Buffer.from(encrypted, 'base64'));
     }
-    throw new Error('Cannot decrypt: encryption not available');
+    throw new Error('无法解密：加密功能不可用');
   }
 
   async saveAccount(platform: string, account: { username: string; password: string; enabled?: boolean }): Promise<void> {

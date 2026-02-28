@@ -57,7 +57,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
           }
         }
       } catch (error) {
-        console.error('Failed to check order status:', error);
+        console.error('订单状态查询失败:', error);
         if (pollingRef.current) {
           clearInterval(pollingRef.current);
         }
