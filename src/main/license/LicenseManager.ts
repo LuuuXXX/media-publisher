@@ -48,7 +48,18 @@ export class LicenseManager {
     try {
       return machineIdSync();
     } catch {
-      return crypto.randomBytes(16).toString('hex');
+      // 当无法获取系统 machineId 时，回退到持久化的随机 deviceId，
+      // 确保同一台机器在多次启动之间保持稳定。
+      const fallbackStore = new Store<{ fallbackDeviceId?: string }>({
+        name: 'license-device',
+        defaults: {},
+      });
+      let fallbackId = fallbackStore.get('fallbackDeviceId');
+      if (!fallbackId) {
+        fallbackId = crypto.randomBytes(16).toString('hex');
+        fallbackStore.set('fallbackDeviceId', fallbackId);
+      }
+      return fallbackId;
     }
   }
 

@@ -116,6 +116,14 @@ export class AccountStore {
     this.store.set('accounts', accounts);
   }
 
+  async toggleAccountEnabled(platform: string, enabled: boolean): Promise<void> {
+    const accounts = this.store.get('accounts');
+    if (accounts[platform]) {
+      accounts[platform] = { ...accounts[platform], enabled, updatedAt: new Date().toISOString() };
+      this.store.set('accounts', accounts);
+    }
+  }
+
   async exportAccounts(filePath: string, password: string): Promise<void> {
     const accounts = this.store.get('accounts');
     const decryptedAccounts: Record<string, { username: string; password: string; enabled: boolean }> = {};

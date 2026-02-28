@@ -118,9 +118,9 @@ export const PlatformAccountCard: React.FC<PlatformAccountCardProps> = ({
           <Form.Item
             name="password"
             label="密码"
-            rules={[{ required: true, message: '请输入密码' }]}
+            rules={platform.loginType !== 'qrcode' ? [{ required: true, message: '请输入密码' }] : []}
           >
-            <Input.Password placeholder="请输入密码" />
+            <Input.Password placeholder={platform.loginType === 'qrcode' ? '二维码登录平台可留空' : '请输入密码'} />
           </Form.Item>
         </Form>
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>

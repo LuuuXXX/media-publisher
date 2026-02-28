@@ -29,6 +29,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
 
   const handleSelectPayment = async (method: string) => {
     setPaymentMethod(method);
+    // 开始新轮询前先清理旧的 interval，避免多个并发轮询
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
     setLoading(true);
     try {
       const result = await window.electronAPI.payment.createOrder(method);

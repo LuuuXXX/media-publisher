@@ -5,7 +5,6 @@ import { GeneralSettings } from '../components/GeneralSettings';
 import { PaymentModal } from '../components/PaymentModal';
 import { useLicense } from '../hooks/useLicense';
 import { CrownOutlined } from '@ant-design/icons';
-import pkg from '../../../package.json';
 
 export const Settings: React.FC = () => {
   const { licenseInfo, isPaid, checkLicense, activateLicense } = useLicense();
@@ -109,7 +108,7 @@ export const Settings: React.FC = () => {
         <Card>
           <Descriptions column={1}>
             <Descriptions.Item label="应用名称">多平台媒体发布工具</Descriptions.Item>
-            <Descriptions.Item label="版本">{pkg.version}</Descriptions.Item>
+            <Descriptions.Item label="版本">{__APP_VERSION__}</Descriptions.Item>
             <Descriptions.Item label="技术栈">Electron + React + TypeScript + Ant Design</Descriptions.Item>
             <Descriptions.Item label="说明">
               本工具通过模拟浏览器操作实现多平台发布，因大部分平台未提供公开 API，故使用 Puppeteer 实现自动化登录和发布。

@@ -11,6 +11,8 @@ const api = {
       ipcRenderer.invoke('account:getAll'),
     delete: (platform: string) =>
       ipcRenderer.invoke('account:delete', platform),
+    toggleEnabled: (platform: string, enabled: boolean) =>
+      ipcRenderer.invoke('account:toggleEnabled', platform, enabled),
     export: (password: string) =>
       ipcRenderer.invoke('account:export', password),
     import: (password: string) =>

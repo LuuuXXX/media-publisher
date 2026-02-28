@@ -22,8 +22,8 @@ export class MediaPublisher {
   private publishers: Map<string, BasePublisher>;
   private accountStore: AccountStore;
 
-  constructor() {
-    this.accountStore = new AccountStore();
+  constructor(accountStore?: AccountStore) {
+    this.accountStore = accountStore ?? new AccountStore();
     this.publishers = new Map([
       ['douyin', new DouyinPublisher()],
       ['bilibili', new BilibiliPublisher()],

@@ -2,36 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
 import type { AccountInfo } from '../types';
 
-declare global {
-  interface Window {
-    electronAPI: {
-      account: {
-        save: (platform: string, account: { username: string; password: string; enabled?: boolean }) => Promise<{ success: boolean; error?: string }>;
-        get: (platform: string) => Promise<{ success: boolean; data?: { username: string; password: string; enabled: boolean } }>;
-        getAll: () => Promise<{ success: boolean; data?: Record<string, AccountInfo> }>;
-        delete: (platform: string) => Promise<{ success: boolean; error?: string }>;
-        export: (password: string) => Promise<{ success: boolean; error?: string }>;
-        import: (password: string) => Promise<{ success: boolean; error?: string }>;
-        test: (platform: string) => Promise<{ success: boolean; message?: string; error?: string }>;
-      };
-      license: {
-        activate: (key: string) => Promise<{ success: boolean; error?: string }>;
-        getInfo: () => Promise<{ success: boolean; data?: import('../types').LicenseInfo }>;
-        verify: () => Promise<{ success: boolean; valid?: boolean }>;
-        isPaid: () => Promise<{ success: boolean; paid?: boolean }>;
-      };
-      payment: {
-        createOrder: (method: string) => Promise<{ success: boolean; data?: { orderId: string; qrCodeUrl: string; amount: number } }>;
-        checkOrder: (orderId: string) => Promise<{ success: boolean; data?: { status: string; licenseKey: string } }>;
-      };
-      publish: {
-        media: (options: { filePath: string; platforms: string[]; title: string; description: string; tags: string[] }) => Promise<{ success: boolean; data?: import('../types').PublishResult[]; error?: string }>;
-        getHistory: () => Promise<{ success: boolean; data?: import('../types').PublishHistory[] }>;
-      };
-    };
-  }
-}
-
 export function useAccounts() {
   const [accounts, setAccounts] = useState<Record<string, AccountInfo>>({});
   const [loading, setLoading] = useState(false);
@@ -66,13 +36,7 @@ export function useAccounts() {
   };
 
   const toggleAccount = async (platform: string, enabled: boolean) => {
-    const getResult = await window.electronAPI.account.get(platform);
-    if (!getResult.success || !getResult.data) return false;
-    const result = await window.electronAPI.account.save(platform, {
-      username: getResult.data.username,
-      password: getResult.data.password,
-      enabled,
-    });
+    const result = await window.electronAPI.account.toggleEnabled(platform, enabled);
     if (result.success) {
       await loadAccounts();
     }
@@ -94,7 +58,7 @@ export function useAccounts() {
     const result = await window.electronAPI.account.export(password);
     if (result.success) {
       message.success('账户导出成功');
-    } else if (result.error !== 'Cancelled') {
+    } else if (result.error !== '已取消') {
       message.error(result.error || '导出失败');
     }
     return result.success;
@@ -105,7 +69,7 @@ export function useAccounts() {
     if (result.success) {
       message.success('账户导入成功');
       await loadAccounts();
-    } else if (result.error !== 'Cancelled') {
+    } else if (result.error !== '已取消') {
       message.error(result.error || '导入失败');
     }
     return result.success;

@@ -9,7 +9,7 @@ let mainWindow: BrowserWindow | null = null;
 const accountStore = new AccountStore();
 const licenseManager = new LicenseManager();
 const featureGuard = new FeatureGuard(licenseManager);
-const mediaPublisher = new MediaPublisher();
+const mediaPublisher = new MediaPublisher(accountStore);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -96,9 +96,20 @@ ipcMain.handle('account:delete', async (_event, platform: string) => {
   }
 });
 
-ipcMain.handle('account:export', async (_event, password: string) => {
+ipcMain.handle('account:toggleEnabled', async (_event, platform: string, enabled: boolean) => {
   try {
-    const result = await dialog.showSaveDialog(mainWindow!, {
+    await accountStore.toggleAccountEnabled(platform, enabled);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('account:export', async (_event, password: string) => {
+  const win = BrowserWindow.getFocusedWindow() ?? mainWindow;
+  if (!win) return { success: false, error: '窗口不可用' };
+  try {
+    const result = await dialog.showSaveDialog(win, {
       defaultPath: 'accounts-backup.json',
       filters: [{ name: 'JSON', extensions: ['json'] }],
     });
@@ -113,8 +124,10 @@ ipcMain.handle('account:export', async (_event, password: string) => {
 });
 
 ipcMain.handle('account:import', async (_event, password: string) => {
+  const win = BrowserWindow.getFocusedWindow() ?? mainWindow;
+  if (!win) return { success: false, error: '窗口不可用' };
   try {
-    const result = await dialog.showOpenDialog(mainWindow!, {
+    const result = await dialog.showOpenDialog(win, {
       filters: [{ name: 'JSON', extensions: ['json'] }],
       properties: ['openFile'],
     });
