@@ -163,6 +163,8 @@ export class LicenseManager {
         this.store.set('license', updated);
         return true;
       }
+      // 服务器校验未通过时，清除本地缓存的 license，防止吊销失效无法生效
+      this.store.set('license', null);
       return false;
     } catch {
       // 网络错误时使用缓存的许可证

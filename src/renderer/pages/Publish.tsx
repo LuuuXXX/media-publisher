@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, Form, Input, Typography, message, List, Tag, Space } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { DragZone } from '../components/DragZone';
@@ -13,6 +13,12 @@ export const Publish: React.FC = () => {
   const [publishing, setPublishing] = useState(false);
   const [publishResults, setPublishResults] = useState<PublishResult[] | null>(null);
   const [form] = Form.useForm();
+
+  const handleFileSelected = useCallback((file: MediaFile) => {
+    setSelectedFile(file);
+    setSelectedPlatforms([]);
+    setPublishResults(null);
+  }, []);
 
   const handlePublish = async () => {
     if (!selectedFile) {
@@ -57,7 +63,7 @@ export const Publish: React.FC = () => {
       <Typography.Title level={4} className="page-title">发布内容</Typography.Title>
 
       <Card title="1. 选择文件" style={{ marginBottom: 16 }}>
-        <DragZone onFileSelected={setSelectedFile} />
+        <DragZone onFileSelected={handleFileSelected} />
       </Card>
 
       <Card title="2. 填写内容信息" style={{ marginBottom: 16 }}>

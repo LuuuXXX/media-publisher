@@ -17,21 +17,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
   const [loading, setLoading] = useState(false);
   const [activationKey, setActivationKey] = useState('');
   const { activateLicense } = useLicense();
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
       if (pollingRef.current) {
-        clearInterval(pollingRef.current);
+        clearTimeout(pollingRef.current);
       }
     };
   }, []);
 
   const handleSelectPayment = async (method: string) => {
     setPaymentMethod(method);
-    // 开始新轮询前先清理旧的 interval，避免多个并发轮询
+    // 开始新轮询前先清理旧的 timeout，避免多个并发轮询
     if (pollingRef.current) {
-      clearInterval(pollingRef.current);
+      clearTimeout(pollingRef.current);
       pollingRef.current = null;
     }
     setLoading(true);
@@ -61,25 +61,29 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
   };
 
   const startPolling = (id: string) => {
-    pollingRef.current = setInterval(async () => {
+    const poll = async () => {
       try {
         const result = await window.electronAPI.payment.checkOrder(id);
         if (result.success && result.data?.status === 'paid') {
-          if (pollingRef.current) clearInterval(pollingRef.current);
           if (result.data.licenseKey) {
+            // 确认 licenseKey 存在后再停止轮询
             setActivationKey(result.data.licenseKey);
             await activateLicense(result.data.licenseKey);
             setCurrentStep(2);
             onSuccess();
+            return; // 不再调度下一次轮询
           }
+          // 已支付但 licenseKey 尚未下发，继续轮询等待
         }
       } catch (error) {
         console.error('订单状态查询失败:', error);
-        if (pollingRef.current) {
-          clearInterval(pollingRef.current);
-        }
+        antMessage.error('订单状态查询失败，请稍后重试或手动输入许可证密钥激活。');
+        return; // 异常时停止轮询，用户可通过手动输入密钥恢复
       }
-    }, 3000);
+      // 上一轮完成后再调度下一轮，避免并发请求叠加
+      pollingRef.current = setTimeout(poll, 3000);
+    };
+    pollingRef.current = setTimeout(poll, 3000);
   };
 
   const handleManualActivate = async () => {
@@ -97,7 +101,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
   };
 
   const handleClose = () => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
+    if (pollingRef.current) clearTimeout(pollingRef.current);
     setCurrentStep(0);
     setPaymentMethod('');
     setOrderId('');

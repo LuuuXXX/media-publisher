@@ -48,21 +48,34 @@ export class AccountStore {
     if (safeStorage.isEncryptionAvailable()) {
       return safeStorage.encryptString(text).toString('base64');
     }
-    // 回退方案：AES-256-CBC 加密
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', this.machineKey, iv);
+    // 回退方案：AES-256-GCM 加密（带完整性校验，防止密文篡改）
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', this.machineKey, iv);
     let encrypted = cipher.update(text, 'utf8', 'base64');
     encrypted += cipher.final('base64');
-    return `aes:${iv.toString('base64')}:${encrypted}`;
+    const authTag = cipher.getAuthTag();
+    return `gcm:${iv.toString('base64')}:${authTag.toString('base64')}:${encrypted}`;
   }
 
   private decrypt(encrypted: string): string {
     if (encrypted.startsWith('aes:')) {
-      // AES-256-CBC 解密
+      // 兼容旧版 AES-256-CBC 格式
       const parts = encrypted.split(':');
       const iv = Buffer.from(parts[1], 'base64');
       const encryptedText = parts[2];
       const decipher = crypto.createDecipheriv('aes-256-cbc', this.machineKey, iv);
+      let decrypted = decipher.update(encryptedText, 'base64', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    }
+    if (encrypted.startsWith('gcm:')) {
+      // AES-256-GCM 解密（带完整性校验）
+      const parts = encrypted.split(':');
+      const iv = Buffer.from(parts[1], 'base64');
+      const authTag = Buffer.from(parts[2], 'base64');
+      const encryptedText = parts[3];
+      const decipher = crypto.createDecipheriv('aes-256-gcm', this.machineKey, iv);
+      decipher.setAuthTag(authTag);
       let decrypted = decipher.update(encryptedText, 'base64', 'utf8');
       decrypted += decipher.final('utf8');
       return decrypted;
@@ -116,6 +129,14 @@ export class AccountStore {
     this.store.set('accounts', accounts);
   }
 
+  private deriveKeyFromPassword(password: string, salt: Buffer): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      crypto.scrypt(password, salt, 32, (err, derivedKey) => {
+        if (err) reject(err); else resolve(derivedKey);
+      });
+    });
+  }
+
   async toggleAccountEnabled(platform: string, enabled: boolean): Promise<void> {
     const accounts = this.store.get('accounts');
     if (accounts[platform]) {
@@ -135,26 +156,46 @@ export class AccountStore {
       };
     }
     const exportData = JSON.stringify(decryptedAccounts);
-    const key = crypto.createHash('sha256').update(password).digest();
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    // 使用 scrypt 派生密钥（带随机 salt），避免弱密码被离线暴力破解
+    const salt = crypto.randomBytes(32);
+    const key = await this.deriveKeyFromPassword(password, salt);
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
     let encrypted = cipher.update(exportData, 'utf8', 'base64');
     encrypted += cipher.final('base64');
+    const authTag = cipher.getAuthTag();
     const fileContent = JSON.stringify({
-      version: '1.0',
+      version: '2.0',
+      salt: salt.toString('base64'),
       iv: iv.toString('base64'),
+      authTag: authTag.toString('base64'),
       data: encrypted,
     });
-    fs.writeFileSync(filePath, fileContent, 'utf8');
+    await fs.promises.writeFile(filePath, fileContent, 'utf8');
   }
 
   async importAccounts(filePath: string, password: string): Promise<void> {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
-    const { iv, data } = JSON.parse(fileContent);
-    const key = crypto.createHash('sha256').update(password).digest();
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.from(iv, 'base64'));
-    let decrypted = decipher.update(data, 'base64', 'utf8');
-    decrypted += decipher.final('utf8');
+    const fileContent = await fs.promises.readFile(filePath, 'utf8');
+    const parsed = JSON.parse(fileContent);
+    let decrypted: string;
+    if (parsed.version === '2.0') {
+      // v2：AES-256-GCM + scrypt 密钥派生
+      const salt = Buffer.from(parsed.salt, 'base64');
+      const key = await this.deriveKeyFromPassword(password, salt);
+      const iv = Buffer.from(parsed.iv, 'base64');
+      const authTag = Buffer.from(parsed.authTag, 'base64');
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      decipher.setAuthTag(authTag);
+      decrypted = decipher.update(parsed.data, 'base64', 'utf8');
+      decrypted += decipher.final('utf8');
+    } else {
+      // v1 兼容：AES-256-CBC + sha256 密钥派生
+      const key = crypto.createHash('sha256').update(password).digest();
+      const iv = Buffer.from(parsed.iv, 'base64');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      decrypted = decipher.update(parsed.data, 'base64', 'utf8');
+      decrypted += decipher.final('utf8');
+    }
     const importedAccounts = JSON.parse(decrypted);
     for (const [platform, account] of Object.entries(importedAccounts as Record<string, { username: string; password: string; enabled: boolean }>)) {
       await this.saveAccount(platform, account);

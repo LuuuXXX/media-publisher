@@ -98,14 +98,25 @@ export const DragZone: React.FC<DragZoneProps> = ({ onFileSelected }) => {
     input.click();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
   return (
     <div
       className={`drag-zone ${isDragging ? 'dragging' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label="点击或拖拽文件到此区域上传"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       {selectedFile ? (
         <Space direction="vertical" align="center">
