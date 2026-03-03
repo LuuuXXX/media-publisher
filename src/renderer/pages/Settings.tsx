@@ -16,8 +16,10 @@ export const Settings: React.FC = () => {
     if (!licenseKey) return;
     setActivating(true);
     try {
-      await activateLicense(licenseKey);
-      setLicenseKey('');
+      const success = await activateLicense(licenseKey);
+      if (success) {
+        setLicenseKey('');
+      }
     } finally {
       setActivating(false);
     }

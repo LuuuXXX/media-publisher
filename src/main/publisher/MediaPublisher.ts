@@ -82,7 +82,7 @@ export class MediaPublisher {
           account,
         };
         const result = await publisher.publish(publishOptions);
-        results.push({ ...result, platform });
+        results.push(result);
       } catch (error) {
         results.push({
           platform,

@@ -174,14 +174,23 @@ export class LicenseManager {
   }
 
   async getLicenseInfo(): Promise<LicenseData | null> {
-    return this.store.get('license');
+    const license = this.store.get('license');
+    if (!license) return null;
+    // 返回前校验签名与过期时间，失败时清理缓存
+    if (!this.verifySignature(license)) {
+      this.store.set('license', null);
+      return null;
+    }
+    if (license.expiresAt && new Date(license.expiresAt) < new Date()) {
+      this.store.set('license', null);
+      return null;
+    }
+    return license;
   }
 
   async isPaid(): Promise<boolean> {
-    const license = this.store.get('license');
+    const license = await this.getLicenseInfo();
     if (!license) return false;
-    if (!this.verifySignature(license)) return false;
-    if (license.expiresAt && new Date(license.expiresAt) < new Date()) return false;
     return license.isPaid;
   }
 }

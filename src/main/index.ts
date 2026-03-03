@@ -26,8 +26,10 @@ function createWindow() {
     show: false,
   });
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173');
+  // 使用 app.isPackaged 而非 NODE_ENV 判断环境，打包后 NODE_ENV 不可靠
+  const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+  if (!app.isPackaged) {
+    mainWindow.loadURL(devServerUrl);
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
@@ -217,7 +219,11 @@ ipcMain.handle('publish:media', async (_event, options: {
       const stats = await stat(options.filePath);
       fileSizeMB = stats.size / (1024 * 1024);
     } catch {
-      // 文件大小获取失败时跳过检查，不阻断发布流程
+      if (isVideo) {
+        // 视频文件无法获取大小时 fail-closed，防止绕过免费版大小限制
+        return { success: false, error: '无法获取视频文件大小，请检查文件是否存在或访问权限，然后重试。' };
+      }
+      // 非视频文件无法获取大小时跳过大小检查，继续发布流程
     }
     const canPublish = await featureGuard.checkPublishPermission(options.platforms.length, fileSizeMB, isVideo);
     if (!canPublish.allowed) {

@@ -88,8 +88,10 @@ media-publisher/
 
 ```
 LICENSE_SERVER=https://your-domain.com/api
-NODE_ENV=development
+LICENSE_HMAC_SECRET=replace-with-strong-random-secret
 ```
+
+> **注意**：主进程不会自动加载 `.env` 文件。`NODE_ENV` 不再用于判断开发/生产模式；主进程改用 `app.isPackaged` 判断打包环境。未打包时（`npm run dev`）自动加载 Vite dev server（默认 `http://localhost:5173`），如需自定义地址可在启动命令中注入 `VITE_DEV_SERVER_URL`。
 
 ## 平台支持
 

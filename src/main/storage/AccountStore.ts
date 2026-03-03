@@ -61,6 +61,9 @@ export class AccountStore {
     if (encrypted.startsWith('aes:')) {
       // 兼容旧版 AES-256-CBC 格式
       const parts = encrypted.split(':');
+      if (parts.length < 3 || !parts[1] || !parts[2]) {
+        throw new Error('存储数据格式损坏（aes 格式缺少必要字段）');
+      }
       const iv = Buffer.from(parts[1], 'base64');
       const encryptedText = parts[2];
       const decipher = crypto.createDecipheriv('aes-256-cbc', this.machineKey, iv);
@@ -71,6 +74,9 @@ export class AccountStore {
     if (encrypted.startsWith('gcm:')) {
       // AES-256-GCM 解密（带完整性校验）
       const parts = encrypted.split(':');
+      if (parts.length < 4 || !parts[1] || !parts[2] || !parts[3]) {
+        throw new Error('存储数据格式损坏（gcm 格式缺少必要字段）');
+      }
       const iv = Buffer.from(parts[1], 'base64');
       const authTag = Buffer.from(parts[2], 'base64');
       const encryptedText = parts[3];
