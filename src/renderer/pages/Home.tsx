@@ -13,7 +13,7 @@ import { PaymentModal } from '../components/PaymentModal';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { isPaid, checkLicense } = useLicense();
+  const { isPaid, checkLicense, activateLicense } = useLicense();
   const { accounts } = useAccounts();
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [todayPublished, setTodayPublished] = useState(0);
@@ -111,6 +111,7 @@ export const Home: React.FC = () => {
           setPaymentModalVisible(false);
           checkLicense();
         }}
+        activateLicense={activateLicense}
       />
     </div>
   );

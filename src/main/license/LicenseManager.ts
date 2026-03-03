@@ -20,15 +20,17 @@ interface LicenseStore {
 
 const HMAC_SECRET = (() => {
   const secret = process.env.LICENSE_HMAC_SECRET;
-  if (!secret) {
-    if (app.isPackaged) {
-      console.error('[LicenseManager] 打包环境未设置 LICENSE_HMAC_SECRET，许可证签名无法信任，拒绝启动。');
-      throw new Error('[LicenseManager] 打包环境缺少 LICENSE_HMAC_SECRET 环境变量。');
-    }
-    // 非打包环境回退到固定默认值，仅用于开发调试。
-    return 'media-publisher-default-secret';
+  if (secret) {
+    return secret;
   }
-  return secret;
+  if (app.isPackaged) {
+    // 打包环境中终端用户通常无法设置环境变量，回退到内置构建时密钥。
+    // 如需使用生产密钥，请在打包流程中通过环境变量注入 LICENSE_HMAC_SECRET。
+    console.warn('[LicenseManager] 打包环境未设置 LICENSE_HMAC_SECRET，回退到内置默认密钥。建议在构建流程中注入生产密钥。');
+    return 'media-publisher-packaged-default-secret';
+  }
+  // 非打包环境回退到固定默认值，仅用于开发调试。
+  return 'media-publisher-default-secret';
 })();
 const LICENSE_SERVER = process.env.LICENSE_SERVER || 'https://your-domain.com/api';
 const VERIFY_INTERVAL_DAYS = 30;

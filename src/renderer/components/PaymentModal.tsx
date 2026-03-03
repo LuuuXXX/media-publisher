@@ -1,22 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Steps, Button, Space, Typography, Card, Spin, Alert, Input, Form, message as antMessage } from 'antd';
 import { AlipayCircleOutlined, WechatOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { useLicense } from '../hooks/useLicense';
 
 interface PaymentModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  activateLicense: (key: string) => Promise<boolean>;
 }
 
-export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuccess }) => {
+export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuccess, activateLicense }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [orderId, setOrderId] = useState<string>('');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [activationKey, setActivationKey] = useState('');
-  const { activateLicense } = useLicense();
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {

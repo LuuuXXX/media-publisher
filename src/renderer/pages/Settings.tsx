@@ -133,6 +133,7 @@ export const Settings: React.FC = () => {
           setPaymentModalVisible(false);
           checkLicense();
         }}
+        activateLicense={activateLicense}
       />
     </div>
   );
