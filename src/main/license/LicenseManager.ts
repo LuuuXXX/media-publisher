@@ -24,15 +24,34 @@ const HMAC_SECRET = (() => {
     return secret;
   }
   if (app.isPackaged) {
-    // 打包环境中终端用户通常无法设置环境变量，回退到内置构建时密钥。
-    // 如需使用生产密钥，请在打包流程中通过环境变量注入 LICENSE_HMAC_SECRET。
-    console.warn('[LicenseManager] 打包环境未设置 LICENSE_HMAC_SECRET，回退到内置默认密钥。建议在构建流程中注入生产密钥。');
-    return 'media-publisher-packaged-default-secret';
+    // 打包环境中不允许使用内置默认密钥，必须在构建/运行时通过环境变量注入 LICENSE_HMAC_SECRET。
+    console.error(
+      '[LicenseManager] 打包环境未设置 LICENSE_HMAC_SECRET，许可证签名校验将无法正常工作。' +
+        ' 请在构建或运行时通过环境变量注入生产密钥。',
+    );
+    // 返回空字符串以确保后续签名/验签操作失败，而不是使用可被提取的硬编码密钥。
+    return '';
   }
-  // 非打包环境回退到固定默认值，仅用于开发调试。
+  // 非打包环境回退到固定默认值，仅用于开发调试，请勿在生产中依赖。
   return 'media-publisher-default-secret';
 })();
-const LICENSE_SERVER = process.env.LICENSE_SERVER || 'https://your-domain.com/api';
+const DEFAULT_LICENSE_SERVER = 'https://your-domain.com/api';
+const LICENSE_SERVER = (() => {
+  const fromEnv = process.env.LICENSE_SERVER;
+  if (fromEnv) {
+    return fromEnv;
+  }
+  if (app.isPackaged) {
+    // 打包环境下仍为占位值，记录错误并返回空字符串，避免对占位地址发起请求。
+    console.error(
+      '[LicenseManager] 打包环境未设置 LICENSE_SERVER，无法进行许可证激活/校验。' +
+        ' 请在构建流程中通过环境变量注入生产授权服务器地址（LICENSE_SERVER）。',
+    );
+    return '';
+  }
+  // 非打包环境保留占位默认值，便于本地开发调试。
+  return DEFAULT_LICENSE_SERVER;
+})();
 const VERIFY_INTERVAL_DAYS = 30;
 
 export class LicenseManager {

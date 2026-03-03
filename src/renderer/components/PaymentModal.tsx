@@ -67,9 +67,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
           if (result.data.licenseKey) {
             // 确认 licenseKey 存在后再停止轮询
             setActivationKey(result.data.licenseKey);
-            await activateLicense(result.data.licenseKey);
-            setCurrentStep(2);
-            onSuccess();
+            const success = await activateLicense(result.data.licenseKey);
+            if (success) {
+              setCurrentStep(2);
+              onSuccess();
+            } else {
+              // 激活失败，停止轮询并引导用户手动重试
+              antMessage.error('许可证激活失败，请手动输入许可证密钥重试。');
+              setCurrentStep(0);
+            }
             return; // 不再调度下一次轮询
           }
           // 已支付但 licenseKey 尚未下发，继续轮询等待
