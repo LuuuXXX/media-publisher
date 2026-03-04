@@ -86,11 +86,18 @@ export class LicenseManager {
   }
 
   private signLicense(data: Omit<LicenseData, 'signature'>): string {
+    if (typeof HMAC_SECRET !== 'string' || HMAC_SECRET.trim() === '') {
+      throw new Error('HMAC secret 未配置，无法签名许可证。');
+    }
     const payload = JSON.stringify(data);
     return crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
   }
 
   private verifySignature(license: LicenseData): boolean {
+    // 当 HMAC_SECRET 未正确配置时，禁止进行验签，直接返回失败
+    if (typeof HMAC_SECRET !== 'string' || HMAC_SECRET.trim() === '') {
+      return false;
+    }
     const { signature, ...data } = license;
     const expectedSignature = this.signLicense(data);
     // 使用 timingSafeEqual 前先验证签名格式
@@ -123,6 +130,9 @@ export class LicenseManager {
   }
 
   async activateLicense(key: string): Promise<{ success: boolean; error?: string }> {
+    if (!LICENSE_SERVER) {
+      return { success: false, error: '授权服务器地址未配置，无法激活许可证。' };
+    }
     try {
       const response = await axios.post(`${LICENSE_SERVER}/license/activate`, {
         key,
@@ -166,6 +176,11 @@ export class LicenseManager {
     if (license.expiresAt && new Date(license.expiresAt) < new Date()) {
       this.store.set('license', null);
       return false;
+    }
+
+    if (!LICENSE_SERVER) {
+      // 授权服务器未配置，跳过在线验证，依赖本地缓存（已通过签名与过期校验）
+      return true;
     }
 
     try {

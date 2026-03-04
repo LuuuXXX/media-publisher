@@ -183,23 +183,45 @@ export class AccountStore {
   async importAccounts(filePath: string, password: string): Promise<void> {
     const fileContent = await fs.promises.readFile(filePath, 'utf8');
     const parsed = JSON.parse(fileContent);
+
+    const isNonEmptyString = (value: unknown): value is string =>
+      typeof value === 'string' && value.length > 0;
+
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('备份文件格式无效：JSON 根节点必须为对象。');
+    }
+
     let decrypted: string;
-    if (parsed.version === '2.0') {
+    if ((parsed as any).version === '2.0') {
       // v2：AES-256-GCM + scrypt 密钥派生
-      const salt = Buffer.from(parsed.salt, 'base64');
+      if (
+        !isNonEmptyString((parsed as any).salt) ||
+        !isNonEmptyString((parsed as any).iv) ||
+        !isNonEmptyString((parsed as any).authTag) ||
+        !isNonEmptyString((parsed as any).data)
+      ) {
+        throw new Error('v2 备份文件格式无效：salt、iv、authTag、data 字段必须为非空字符串。');
+      }
+      const salt = Buffer.from((parsed as any).salt, 'base64');
       const key = await this.deriveKeyFromPassword(password, salt);
-      const iv = Buffer.from(parsed.iv, 'base64');
-      const authTag = Buffer.from(parsed.authTag, 'base64');
+      const iv = Buffer.from((parsed as any).iv, 'base64');
+      const authTag = Buffer.from((parsed as any).authTag, 'base64');
       const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
       decipher.setAuthTag(authTag);
-      decrypted = decipher.update(parsed.data, 'base64', 'utf8');
+      decrypted = decipher.update((parsed as any).data, 'base64', 'utf8');
       decrypted += decipher.final('utf8');
     } else {
       // v1 兼容：AES-256-CBC + sha256 密钥派生
+      if (
+        !isNonEmptyString((parsed as any).iv) ||
+        !isNonEmptyString((parsed as any).data)
+      ) {
+        throw new Error('v1 备份文件格式无效：iv、data 字段必须为非空字符串。');
+      }
       const key = crypto.createHash('sha256').update(password).digest();
-      const iv = Buffer.from(parsed.iv, 'base64');
+      const iv = Buffer.from((parsed as any).iv, 'base64');
       const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-      decrypted = decipher.update(parsed.data, 'base64', 'utf8');
+      decrypted = decipher.update((parsed as any).data, 'base64', 'utf8');
       decrypted += decipher.final('utf8');
     }
     const importedAccounts = JSON.parse(decrypted);

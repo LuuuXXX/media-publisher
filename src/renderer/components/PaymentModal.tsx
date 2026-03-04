@@ -17,14 +17,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
   const [loading, setLoading] = useState(false);
   const [activationKey, setActivationKey] = useState('');
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
+    if (open) {
+      // 弹窗打开时重置取消标记，允许轮询运行
+      cancelledRef.current = false;
+    }
     return () => {
+      cancelledRef.current = true;
       if (pollingRef.current) {
         clearTimeout(pollingRef.current);
       }
     };
-  }, []);
+  }, [open]);
 
   const handleSelectPayment = async (method: string) => {
     setPaymentMethod(method);
@@ -61,13 +67,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
 
   const startPolling = (id: string) => {
     const poll = async () => {
+      if (cancelledRef.current) return; // 弹窗已关闭，停止轮询
       try {
         const result = await window.electronAPI.payment.checkOrder(id);
+        if (cancelledRef.current) return; // 请求完成后再次检查，防止竞态
         if (result.success && result.data?.status === 'paid') {
           if (result.data.licenseKey) {
             // 确认 licenseKey 存在后再停止轮询
             setActivationKey(result.data.licenseKey);
             const success = await activateLicense(result.data.licenseKey);
+            if (cancelledRef.current) return;
             if (success) {
               setCurrentStep(2);
               onSuccess();
@@ -81,6 +90,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
           // 已支付但 licenseKey 尚未下发，继续轮询等待
         }
       } catch (error) {
+        if (cancelledRef.current) return;
         console.error('订单状态查询失败:', error);
         antMessage.error('订单状态查询失败，请稍后重试或手动输入许可证密钥激活。');
         // 返回步骤 0，用户可使用已有许可证密钥手动激活
@@ -88,7 +98,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
         return; // 异常时停止轮询
       }
       // 上一轮完成后再调度下一轮，避免并发请求叠加
-      pollingRef.current = setTimeout(poll, 3000);
+      if (!cancelledRef.current) {
+        pollingRef.current = setTimeout(poll, 3000);
+      }
     };
     pollingRef.current = setTimeout(poll, 3000);
   };
@@ -108,6 +120,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
   };
 
   const handleClose = () => {
+    cancelledRef.current = true;
     if (pollingRef.current) clearTimeout(pollingRef.current);
     setCurrentStep(0);
     setPaymentMethod('');
