@@ -84,8 +84,7 @@ export const Publish: React.FC = () => {
         </Form>
       </Card>
 
-      <Card title="3. 选择平台" style={{ marginBottom: 16 }}>
-        <PlatformSelector
+      <PlatformSelector
           mediaType={selectedFile?.type || 'unknown'}
           accounts={accounts}
           selectedPlatforms={selectedPlatforms}
@@ -93,7 +92,6 @@ export const Publish: React.FC = () => {
           onPublish={handlePublish}
           publishing={publishing}
         />
-      </Card>
 
       {publishResults && (
         <Card title="发布结果">

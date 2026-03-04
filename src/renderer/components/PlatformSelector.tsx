@@ -47,7 +47,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
   };
 
   return (
-    <Card title="选择发布平台" style={{ marginTop: 16 }}>
+    <Card title="选择发布平台" style={{ marginBottom: 16 }}>
       <Space style={{ marginBottom: 16 }}>
         <Button size="small" onClick={handleCheckAll}>全选已配置</Button>
         <Button size="small" onClick={handleUncheckAll}>取消全选</Button>

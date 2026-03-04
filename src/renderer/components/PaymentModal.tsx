@@ -23,6 +23,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ open, onClose, onSuc
     if (open) {
       // 弹窗打开时重置取消标记，允许轮询运行
       cancelledRef.current = false;
+    } else {
+      // 弹窗关闭（含成功路径父组件置 open=false）时重置内部状态，确保下次打开是干净初始状态
+      setCurrentStep(0);
+      setPaymentMethod('');
+      setOrderId('');
+      setQrCodeUrl('');
+      setActivationKey('');
     }
     return () => {
       cancelledRef.current = true;
