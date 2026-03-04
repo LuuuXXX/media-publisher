@@ -1,0 +1,243 @@
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import path from 'path';
+import { AccountStore } from './storage/AccountStore';
+import { LicenseManager } from './license/LicenseManager';
+import { FeatureGuard } from './features/FeatureGuard';
+import { MediaPublisher } from './publisher/MediaPublisher';
+
+let mainWindow: BrowserWindow | null = null;
+const accountStore = new AccountStore();
+const licenseManager = new LicenseManager();
+const featureGuard = new FeatureGuard(licenseManager);
+const mediaPublisher = new MediaPublisher(accountStore);
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    minWidth: 900,
+    minHeight: 600,
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/index.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+    titleBarStyle: 'hiddenInset',
+    show: false,
+  });
+
+  // 使用 app.isPackaged 而非 NODE_ENV 判断环境，打包后 NODE_ENV 不可靠
+  const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+  if (!app.isPackaged) {
+    mainWindow.loadURL(devServerUrl);
+    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+  }
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show();
+  });
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+app.whenReady().then(async () => {
+  await licenseManager.initialize();
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+// 账户管理 IPC 处理器
+ipcMain.handle('account:save', async (_event, platform: string, account: { username: string; password: string }) => {
+  try {
+    await accountStore.saveAccount(platform, account);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('account:getAll', async () => {
+  try {
+    const accounts = await accountStore.getAllAccounts();
+    return { success: true, data: accounts };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('account:delete', async (_event, platform: string) => {
+  try {
+    await accountStore.deleteAccount(platform);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('account:toggleEnabled', async (_event, platform: string, enabled: boolean) => {
+  try {
+    await accountStore.toggleAccountEnabled(platform, enabled);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('account:export', async (_event, password: string) => {
+  const win = BrowserWindow.getFocusedWindow() ?? mainWindow;
+  if (!win) return { success: false, error: '窗口不可用' };
+  try {
+    const result = await dialog.showSaveDialog(win, {
+      defaultPath: 'accounts-backup.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (!result.canceled && result.filePath) {
+      await accountStore.exportAccounts(result.filePath, password);
+      return { success: true };
+    }
+    return { success: false, error: '已取消' };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('account:import', async (_event, password: string) => {
+  const win = BrowserWindow.getFocusedWindow() ?? mainWindow;
+  if (!win) return { success: false, error: '窗口不可用' };
+  try {
+    const result = await dialog.showOpenDialog(win, {
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      properties: ['openFile'],
+    });
+    if (!result.canceled && result.filePaths.length > 0) {
+      await accountStore.importAccounts(result.filePaths[0], password);
+      return { success: true };
+    }
+    return { success: false, error: '已取消' };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('account:test', async (_event, platform: string) => {
+  // TODO: 实现各平台实际连接测试
+  return { success: true, message: '连接测试成功（模拟）' };
+});
+
+// 许可证管理 IPC 处理器
+ipcMain.handle('license:activate', async (_event, key: string) => {
+  try {
+    const result = await licenseManager.activateLicense(key);
+    return result;
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('license:getInfo', async () => {
+  try {
+    const info = await licenseManager.getLicenseInfo();
+    return { success: true, data: info };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('license:verify', async () => {
+  try {
+    const valid = await licenseManager.verifyLicense();
+    return { success: true, valid };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('license:isPaid', async () => {
+  try {
+    const paid = await licenseManager.isPaid();
+    return { success: true, paid };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+// 支付 IPC 处理器
+ipcMain.handle('payment:createOrder', async (_event, method: string) => {
+  // TODO: 实现实际支付订单创建
+  return {
+    success: true,
+    data: {
+      orderId: `ORDER_${Date.now()}`,
+      qrCodeUrl: 'https://example.com/qrcode',
+      amount: 99,
+    },
+  };
+});
+
+ipcMain.handle('payment:checkOrder', async (_event, orderId: string) => {
+  // TODO: 实现实际订单状态查询
+  return {
+    success: true,
+    data: {
+      status: 'pending',
+      licenseKey: '',
+    },
+  };
+});
+
+// 发布 IPC 处理器
+ipcMain.handle('publish:media', async (_event, options: {
+  filePath: string;
+  platforms: string[];
+  title: string;
+  description: string;
+  tags: string[];
+}) => {
+  try {
+    const videoExtensions = new Set(['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v']);
+    const fileExt = path.extname(options.filePath).toLowerCase().replace('.', '');
+    const isVideo = videoExtensions.has(fileExt);
+
+    let fileSizeMB: number | undefined;
+    try {
+      const { stat } = await import('fs/promises');
+      const stats = await stat(options.filePath);
+      fileSizeMB = stats.size / (1024 * 1024);
+    } catch {
+      if (isVideo) {
+        // 视频文件无法获取大小时 fail-closed，防止绕过免费版大小限制
+        return { success: false, error: '无法获取视频文件大小，请检查文件是否存在或访问权限，然后重试。' };
+      }
+      // 非视频文件无法获取大小时跳过大小检查，继续发布流程
+    }
+    const canPublish = await featureGuard.checkPublishPermission(options.platforms.length, fileSizeMB, isVideo);
+    if (!canPublish.allowed) {
+      return { success: false, error: canPublish.reason };
+    }
+    const results = await mediaPublisher.publish(options);
+    await featureGuard.recordPublish();
+    return { success: true, data: results };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+ipcMain.handle('publish:getHistory', async () => {
+  // TODO: 从数据库实现发布历史记录
+  return { success: true, data: [] };
+});

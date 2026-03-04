@@ -1,0 +1,81 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f0f2f5;
+  color: #333;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.drag-zone {
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: #fafafa;
+}
+
+.drag-zone:hover {
+  border-color: #1890ff;
+  background-color: #e6f7ff;
+}
+
+.drag-zone.dragging {
+  border-color: #1890ff;
+  background-color: #e6f7ff;
+  transform: scale(1.01);
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.2);
+}
+
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.platform-card {
+  border-radius: 8px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.platform-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.ant-layout-sider {
+  background: #001529;
+}
+
+.ant-menu-dark {
+  background: #001529;
+}
+
+.content-area {
+  padding: 24px;
+  overflow-y: auto;
+  height: calc(100vh - 64px);
+}
+
+.stat-card {
+  border-radius: 8px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: #262626;
+}

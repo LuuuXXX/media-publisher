@@ -1,0 +1,143 @@
+import React, { useState, useCallback } from 'react';
+import { Typography, Space, message } from 'antd';
+import { InboxOutlined, VideoCameraOutlined, FileTextOutlined, PictureOutlined } from '@ant-design/icons';
+import type { MediaFile, MediaType } from '../types';
+
+interface DragZoneProps {
+  onFileSelected: (file: MediaFile) => void;
+}
+
+function detectMediaType(fileName: string): MediaType {
+  const ext = fileName.split('.').pop()?.toLowerCase() || '';
+  const videoExts = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v'];
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+  const articleExts = ['txt', 'md', 'doc', 'docx', 'html'];
+
+  if (videoExts.includes(ext)) return 'video';
+  if (imageExts.includes(ext)) return 'image';
+  if (articleExts.includes(ext)) return 'article';
+  return 'unknown';
+}
+
+const mediaTypeIcons: Record<MediaType, React.ReactNode> = {
+  video: <VideoCameraOutlined style={{ fontSize: 48, color: '#1890ff' }} />,
+  image: <PictureOutlined style={{ fontSize: 48, color: '#52c41a' }} />,
+  article: <FileTextOutlined style={{ fontSize: 48, color: '#fa8c16' }} />,
+  unknown: <InboxOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />,
+};
+
+const mediaTypeLabels: Record<MediaType, string> = {
+  video: '视频',
+  image: '图片',
+  article: '文章',
+  unknown: '未知',
+};
+
+// Electron 通过非标准的 'path' 属性在 File 对象上暴露原生文件路径
+interface ElectronFile extends File {
+  path?: string;
+}
+
+export const DragZone: React.FC<DragZoneProps> = ({ onFileSelected }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
+
+  const handleFile = useCallback((file: File) => {
+    const nativePath = (file as ElectronFile).path;
+    if (!nativePath) {
+      // 在 Electron 环境外（如浏览器）无法获取原生路径，提示用户使用系统文件选择器
+      message.error('无法获取文件路径，请通过系统文件选择器选择文件。');
+      return;
+    }
+    const mediaType = detectMediaType(file.name);
+    const mediaFile: MediaFile = {
+      path: nativePath,
+      name: file.name,
+      size: file.size,
+      type: mediaType,
+    };
+    setSelectedFile(mediaFile);
+    onFileSelected(mediaFile);
+  }, [onFileSelected]);
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFile(files[0]);
+    }
+  };
+
+  const handleClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/*,image/*,.txt,.md,.doc,.docx,.html';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) handleFile(file);
+    };
+    input.click();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
+  return (
+    <div
+      className={`drag-zone ${isDragging ? 'dragging' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label="点击或拖拽文件到此区域上传"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+    >
+      {selectedFile ? (
+        <Space direction="vertical" align="center">
+          {mediaTypeIcons[selectedFile.type]}
+          <Typography.Text strong>{selectedFile.name}</Typography.Text>
+          <Typography.Text type="secondary">
+            类型: {mediaTypeLabels[selectedFile.type]} | 大小: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+          </Typography.Text>
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            点击或拖拽重新选择文件
+          </Typography.Text>
+        </Space>
+      ) : (
+        <Space direction="vertical" align="center">
+          <InboxOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />
+          <Typography.Text>点击或拖拽文件到此区域上传</Typography.Text>
+          <Typography.Text type="secondary">
+            支持视频（MP4、AVI、MOV等）、图片（JPG、PNG等）、文章（TXT、MD、DOC等）
+          </Typography.Text>
+        </Space>
+      )}
+    </div>
+  );
+};
